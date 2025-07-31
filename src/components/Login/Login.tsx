@@ -1,18 +1,31 @@
+
 import './Login.module.css';
 import { auth, provider } from '../../FirebaseConfig';
-import { signInWithPopup, GithubAuthProvider, type User } from 'firebase/auth';
-import { useState } from 'react';
+import { signInWithPopup, GithubAuthProvider, type User, getAdditionalUserInfo } from 'firebase/auth';
+import { type Dispatch, type SetStateAction } from 'react';
+import { Navigate } from 'react-router-dom';
 
-const Login = () => {
-    const [user, setUser] = useState<User | null>(auth.currentUser);
+interface LoginProps {
+    user: User | null;
+    username: string | null;
+    setUser: Dispatch<SetStateAction<User | null>>;
+    setToken: Dispatch<SetStateAction<string | undefined>>;
+    setUsername: Dispatch<SetStateAction<string | null>>;
+}
+
+const Login = ({ user, setUser, setToken, username, setUsername } : LoginProps) => {
 
     const gitHubLogin = () => {
         signInWithPopup(auth, provider)
             .then((result) => {
                 const credential = GithubAuthProvider.credentialFromResult(result);
                 const token = credential?.accessToken;
-
+                const details = getAdditionalUserInfo(result);
+                
+                setUsername(details?.username ?? null)
                 setUser(result.user);
+                setToken(token);
+                
             }). catch((error) => {
                 console.log(error);
             })
@@ -21,19 +34,15 @@ const Login = () => {
     const logOut = async () => {
         await auth.signOut();
         setUser(null);
+        setToken(undefined);
     }
 
     return (
         <>
             <div className='Login'>
                 {user ? (
-                    <>
-                        <h1>{user.displayName}</h1>
-                        <button 
-                            className='btn'
-                            onClick={logOut}
-                        >Sign out</button>
-                    </>
+                    <Navigate to='/chat' replace/>
+
                 ) :
                 <button 
                     className='btn'
