@@ -35,6 +35,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
         const getMessages = async () => {
             try {
                 const res = await fetch('https://api.github.com/gists/506a5ed0fb1bb575dc9d0385f06290b9/comments', {
+                    cache: 'no-store',
                     headers : {
                         Authorization: `token ${token}`
                     }
@@ -50,7 +51,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
         getMessages();
 
-        let intervalId = setInterval(getMessages, 1000000);
+        let intervalId = setInterval(getMessages, 5000);
         return () => clearInterval(intervalId);
     }, [token])
 
