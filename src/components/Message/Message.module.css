@@ -1,0 +1,23 @@
+.message {
+    border: solid;
+    border-width: 3px;
+    width: fit-content;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border-radius: 6px;
+    color:rgb(23, 184, 50)
+}
+
+
+.ownmessage {
+    border: solid;
+    border-width: 3px;
+    width: fit-content;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border-radius: 6px;
+    margin-left: auto;
+    margin-right: 0;
+    color:rgb(19, 138, 218);
+}
+

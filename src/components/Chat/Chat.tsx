@@ -5,6 +5,7 @@ import { type User } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import menu from "../../assets/menu-symbol-of-three-parallel-lines.svg";
+import Message from '../Message/Message';
 
 interface ChatProps {
     user: User | null;
@@ -51,7 +52,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
         getMessages();
 
-        let intervalId = setInterval(getMessages, 5000);
+        let intervalId = setInterval(getMessages, 500000000);
         return () => clearInterval(intervalId);
     }, [token])
 
@@ -69,8 +70,16 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     </div>
                 </div>
                 <div className={styles.messages}>
-                {messages.map((messages, i) => (
-                    <div className={styles.message} key={i}>{messages.body}</div>
+                {messages.map((message, i) => (
+                    // <div className={styles.message} key={i}>{messages.body}</div>
+                    <Message 
+                        key={i}
+                        username={username}
+                        message={message.body}
+                        time={null}
+                        isOwn={message.user.login === username}
+
+                    />
                 ))}
                 </div>
                 <div className={styles.inputBar}>
