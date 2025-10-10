@@ -107,7 +107,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                         key={i}
                         username={username}
                         message={message.body}
-                        time={null}
+                        time={`${new Date(message.created_at).getHours()}:${new Date(message.created_at).getMinutes().toString().padStart(2, "0")}`}
                         isOwn={message.user.login === username}
 
                     />

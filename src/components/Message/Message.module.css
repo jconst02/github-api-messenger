@@ -1,23 +1,42 @@
 .message {
-    border: solid;
-    border-width: 3px;
-    width: fit-content;
-    padding: 0.5rem;
     margin-top: 0.5rem;
-    border-radius: 6px;
-    color:rgb(23, 184, 50)
 }
 
 
 .ownmessage {
+    margin-top: 0.5rem;
+    margin-right: 0;
+    margin-left: auto;
+    width: fit-content;
+}
+
+.messagecontent {
+    padding: 0.5rem;
+    color:rgb(23, 184, 50);
     border: solid;
     border-width: 3px;
     width: fit-content;
-    padding: 0.5rem;
-    margin-top: 0.5rem;
     border-radius: 6px;
-    margin-left: auto;
-    margin-right: 0;
+}
+
+.ownmessagecontent {
+    padding: 0.5rem;
     color:rgb(19, 138, 218);
+    border: solid;
+    border-width: 3px;
+    border-radius: 6px;
+}
+
+.time {
+    margin-top: 0.1rem;
+    text-align: left;
+    font-size: 0.60rem;
+}
+
+
+.timeown {
+    margin-top: 0.1rem;
+    text-align: right;
+    font-size: 0.60rem;
 }
 
