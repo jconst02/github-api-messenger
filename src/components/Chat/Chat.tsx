@@ -2,7 +2,7 @@
 import styles from './Chat.module.css';
 import { auth, provider } from '../../FirebaseConfig';
 import { type User } from 'firebase/auth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import menu from "../../assets/menu-symbol-of-three-parallel-lines.svg";
 import Message from '../Message/Message';
@@ -22,6 +22,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
     const [messages, setMessages] = useState<any[]>([]);
     const [chatName, setChatName] = useState<string | null>(null);
     const [textValue, setTextValue] = useState('');
+    const messagesRef = useRef<HTMLDivElement | null>(null);
 
 
 
@@ -39,6 +40,14 @@ const Chat = ({ user, token, username } : ChatProps) => {
         let intervalId = setInterval(getMessages, 500000000);
         return () => clearInterval(intervalId);
     }, [token])
+
+
+    //TODO: update this so just used once at the start not everytime after message sent.
+    useLayoutEffect(() => {
+        if (messagesRef.current){
+            messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     const getMessages = async () => {
         try {
@@ -91,7 +100,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                         {chatName}
                     </div>
                 </div>
-                <div className={styles.messages}>
+                <div className={styles.messages} ref={messagesRef}>
                 {messages.map((message, i) => (
                     // <div className={styles.message} key={i}>{messages.body}</div>
                     <Message 
