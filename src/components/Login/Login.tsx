@@ -41,7 +41,7 @@ const Login = ({ user, setUser, setToken, username, setUsername } : LoginProps) 
         <>
             <div className='Login'>
                 {user ? (
-                    <Navigate to='/chat' replace/>
+                    <Navigate to='/chatlist' replace/>
 
                 ) :
                 <button 

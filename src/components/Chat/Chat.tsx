@@ -3,7 +3,7 @@ import styles from './Chat.module.css';
 import { auth, provider } from '../../FirebaseConfig';
 import { type User } from 'firebase/auth';
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import menu from "../../assets/menu-symbol-of-three-parallel-lines.svg";
 import Message from '../Message/Message';
 
@@ -24,11 +24,14 @@ const Chat = ({ user, token, username } : ChatProps) => {
     const [textValue, setTextValue] = useState('');
     const messagesRef = useRef<HTMLDivElement | null>(null);
 
+    const location = useLocation();
+    const chat =  location.state?.chat;
+
 
 
     useEffect(() => {
 
-        fetch('https://api.github.com/gists/506a5ed0fb1bb575dc9d0385f06290b9', {
+        fetch(`https://api.github.com/gists/${chat.id}`, {
             headers : {
                 Authorization: `token ${token}`
             }
@@ -51,7 +54,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
     const getMessages = async () => {
         try {
-            const res = await fetch('https://api.github.com/gists/506a5ed0fb1bb575dc9d0385f06290b9/comments', {
+            const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
                 cache: 'no-store',
                 headers : {
                     Authorization: `token ${token}`
@@ -68,7 +71,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
     const sendMessage = async () => {
         try {
-            const res = await fetch('https://api.github.com/gists/506a5ed0fb1bb575dc9d0385f06290b9/comments', {
+            const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
                 method: 'POST',
                 headers : {
                     'Content-Type': 'application/json',

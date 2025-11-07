@@ -8,6 +8,7 @@ import {
   Route
 } from 'react-router-dom';
 import Chat from './components/Chat/Chat';
+import ChatList from './components/ChatList/ChatList';
 
 function App() {
   const [user, setUser] = useState<User | null>(auth.currentUser);
@@ -20,6 +21,7 @@ function App() {
         <Route path="*" element={<Login user={user} setUser={setUser} setToken={setToken} username={username} setUsername={setUsername}/>} />
         <Route path="/login" element={<Login user={user} setUser={setUser} setToken={setToken} username={username} setUsername={setUsername}/>} />
         <Route path="/chat" element={<Chat user={user} username={username} token={token}/>} />
+        <Route path="/chatlist" element={<ChatList user={user} username={username} token={token}/>}></Route>
       </Routes>
     </Router>
   )
