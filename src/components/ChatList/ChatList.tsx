@@ -27,20 +27,41 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
     const [modalError, setModalError] = useState("");
 
     useEffect(() => {
-        fetch('https://api.github.com/gists', {
-            headers : {
-                Authorization: `token ${token}`
+        const fetchOrCreateGist = async () => {
+            const res = await fetch('https://api.github.com/gists', {
+                headers : {
+                    Authorization: `token ${token}`
+                }
+            })
+    
+            const data = await res.json();
+            const gist = data.find((gist: any) => gist.description === 'gitmessagefile');
+            if (gist) {
+                setGistChatFile(gist.comments_url);
+                console.log(gist.comments_url);
             }
-        }).then(res => res.json())
-        .then(data => {
-            console.log(data);
-            const gist = data.filter((gist: any) => gist.description === 'gitmessagefile');
-            if (gist.length !== 0) {
-                setGistChatFile(gist[0].comments_url);
-                console.log(gist[0].comments_url);
+            else {
+                const createRes = await fetch('https://api.github.com/gists', {
+                    method: 'POST',
+                    headers : {
+                        Authorization: `token ${token}`
+                    },
+                    body: JSON.stringify({
+                        description: "gitmessagefile",
+                        public: false,
+                        files: {
+                            "gistfile1.txt": {
+                                content: "gitmessagefile"
+                            }
+                        }
+                    })
+                });
+                const newGist = await createRes.json();
+                setGistChatFile(newGist.comments_url);
             }
-            //TODO: Create gist if not found
-        });
+        }
+
+        fetchOrCreateGist();
     }, [])
 
     useEffect(() => {
