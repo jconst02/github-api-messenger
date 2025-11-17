@@ -21,6 +21,10 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
 
     const [chatList, setChatList] = useState<ChatItem[]>([]);
     const [gistChatFile, setGistChatFile] = useState<string|undefined>(undefined);
+    const [showModal, setShowModal] = useState<Boolean>(false);
+    const [text, setText] = useState("");
+    const [updateCounter, setUpdateCounter] = useState(0);
+    const [modalError, setModalError] = useState("");
 
     useEffect(() => {
         fetch('https://api.github.com/gists', {
@@ -57,7 +61,8 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
             setChatList(mapped);
             console.log(mapped);
         })
-    }, [gistChatFile, token]);
+    }, [gistChatFile, token, updateCounter]);
+
     const navigate = useNavigate();
     const openChat = (chat: ChatItem) => {
         navigate('/chat', {
@@ -67,6 +72,37 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
         });
     }
 
+    const gistExists = async (gist_id: String) => {
+        const res = await fetch(`https://api.github.com/gists/${gist_id}`, {
+            headers : {
+                Authorization: `token ${token}`
+            }
+        });
+
+        return res.ok;
+    }
+
+    const addChat = async(gist_id: String) => {
+        if (!gistChatFile || !token) return;
+        const exists = await gistExists(gist_id);
+        if (!exists) {
+            setModalError("Gist with that ID does not exist");
+            return;
+        }
+
+        await fetch(gistChatFile, {
+            method: 'POST',
+            headers: {
+                Authorization: `token ${token}`
+            },
+            body: JSON.stringify({ body: `${gist_id}\r\nchat name` })
+        });
+        setShowModal(false);
+        setText("");
+        setModalError("");
+        setUpdateCounter(prev => prev + 1);
+    }
+
     return (
         <>
             <div className={styles.chatlist}>
@@ -74,6 +110,9 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
                     <div>
                         Chats
                     </div>
+                    <button onClick={() => setShowModal(true)}>
+                        Add Chat
+                    </button>
                 </div>
                 <div className={styles.chatlistbody}>
                     {chatList.map((chat, i) => (
@@ -86,6 +125,38 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
                         </div>
                     ))}
                 </div>
+                { showModal && (
+                    <div className={styles.modal}>
+                        <div className={styles.modalcontent}>
+                            <div>
+                                Enter Gist ID
+                            </div>
+                            <input onChange={(e) => 
+                                setText(e.target.value)}
+                            >
+                            </input>
+                            <div className={styles.buttonRow}>
+                                <button onClick={() => {
+                                    setShowModal(false);
+                                    setText("");
+                                    setModalError("");
+                                }}>Cancel
+                                </button>
+                                <button onClick={() => {
+                                    addChat(text);
+                                }}>
+                                    Add Chat
+                                </button>
+                            </div>
+                            {modalError && 
+                                <div className={styles.error}>
+                                    {modalError}
+                                </div>
+                            }
+                        </div>
+                    </div>
+                )}
+
             </div>
         </>
     )
