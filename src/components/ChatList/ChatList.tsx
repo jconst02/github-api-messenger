@@ -120,7 +120,12 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
             setModalError("Gist with that ID does not exist");
             return;
         }
-        console.log("Exists", exists);
+        
+        if (chatList.some((chat) => chat.id === gist_id)){
+            setModalError("Chat is already added");
+            return;
+        }
+
         await fetch(gistChatFile, {
             method: 'POST',
             headers: {
@@ -154,6 +159,10 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
         const newGist = await createRes.json();
         console.log(newGist);
         addChat(newGist.id);
+    }
+
+    const deleteChat = async(gist_id: string) => {
+
     }
 
     return (
