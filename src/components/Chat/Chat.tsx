@@ -102,6 +102,9 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     <div>
                         {chatName}
                     </div>
+                    <div className={styles.chatId}>
+                        Chat ID: {chat.id}
+                    </div>
                 </div>
                 <div className={styles.messages} ref={messagesRef}>
                 {messages.map((message, i) => (

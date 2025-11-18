@@ -44,7 +44,13 @@
     width: 2rem;
 }
 
+.chatId {
+    position: absolute;
+    font-size: 15px;
+    top: 2px;
+    right: 20px;
 
+}
 .messages {
   flex: 1;
   overflow-y: auto;
