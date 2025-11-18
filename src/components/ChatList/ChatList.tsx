@@ -101,23 +101,32 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
             }
         });
 
-        return res.ok;
+        if (!res.ok) {
+            return { exists: false, name: null };
+        }
+        const data = await res.json();
+        console.log("added",data);
+
+        return {
+            exists: true,
+            name: data.description
+        }
     }
 
     const addChat = async(gist_id: String) => {
         if (!gistChatFile || !token) return;
-        const exists = await gistExists(gist_id);
+        const { exists, name } = await gistExists(gist_id);
         if (!exists) {
             setModalError("Gist with that ID does not exist");
             return;
         }
-
+        console.log("Exists", exists);
         await fetch(gistChatFile, {
             method: 'POST',
             headers: {
                 Authorization: `token ${token}`
             },
-            body: JSON.stringify({ body: `${gist_id}\r\nchat name` })
+            body: JSON.stringify({ body: `${gist_id}\r\n${name}` })
         });
         setShowModal(false);
         setText("");
