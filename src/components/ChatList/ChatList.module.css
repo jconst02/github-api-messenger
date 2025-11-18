@@ -33,7 +33,26 @@
     font-weight: bold;
 }
 
-.bar button {
+.addChatButton {
+    position: absolute;
+    top: 50%;
+    right: 90px;
+    width: 3.5rem;
+    height: 3.5rem;
+    transform: translateY(-50%);
+    color: #3bf6c7;
+
+    border: 2px solid #3bf6c7;;
+    background-color: #29a183;;
+    border-radius: 8px;
+}
+
+.addChatButton:hover {
+    background-color: #17301d;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
+}
+
+.createChatButton {
     position: absolute;
     top: 50%;
     right: 20px;
@@ -47,7 +66,7 @@
     border-radius: 8px;
 }
 
-.bar button:hover {
+.createChatButton:hover {
     background-color: #17301d;
     box-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
 }

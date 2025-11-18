@@ -22,6 +22,7 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
     const [chatList, setChatList] = useState<ChatItem[]>([]);
     const [gistChatFile, setGistChatFile] = useState<string|undefined>(undefined);
     const [showModal, setShowModal] = useState<Boolean>(false);
+    const [mode, setMode] = useState<"add"|"create">("add");
     const [text, setText] = useState("");
     const [updateCounter, setUpdateCounter] = useState(0);
     const [modalError, setModalError] = useState("");
@@ -124,6 +125,28 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
         setUpdateCounter(prev => prev + 1);
     }
 
+    const createChat = async(chatName: string) => {
+        if (!gistChatFile || !token) return;
+        const createRes = await fetch('https://api.github.com/gists', {
+            method: 'POST',
+            headers : {
+                Authorization: `token ${token}`
+            },
+            body: JSON.stringify({
+                description: chatName,
+                public: false,
+                files: {
+                    "gistfile1.txt": {
+                        content: chatName
+                    }
+                }
+            })
+        });
+        const newGist = await createRes.json();
+        console.log(newGist);
+        addChat(newGist.id);
+    }
+
     return (
         <>
             <div className={styles.chatlist}>
@@ -131,8 +154,17 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
                     <div>
                         Chats
                     </div>
-                    <button onClick={() => setShowModal(true)}>
+                    <button className={styles.addChatButton} onClick={() => { 
+                        setShowModal(true);
+                        setMode("add");
+                    }}>
                         Add Chat
+                    </button>
+                    <button className={styles.createChatButton} onClick={() => {
+                        setShowModal(true);
+                        setMode("create")
+                    }}>
+                        Create Chat
                     </button>
                 </div>
                 <div className={styles.chatlistbody}>
@@ -150,7 +182,7 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
                     <div className={styles.modal}>
                         <div className={styles.modalcontent}>
                             <div>
-                                Enter Gist ID
+                                {mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
                             </div>
                             <input onChange={(e) => 
                                 setText(e.target.value)}
@@ -163,11 +195,23 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
                                     setModalError("");
                                 }}>Cancel
                                 </button>
-                                <button onClick={() => {
-                                    addChat(text);
-                                }}>
-                                    Add Chat
-                                </button>
+                                {mode === 'add' && (
+                                    <button onClick={() => {
+                                        addChat(text);
+                                    }}>
+                                        Add Chat
+                                    </button>
+                                )}
+                                {mode === 'create' && (
+                                    <button 
+                                    disabled={!text}
+                                    onClick={() => {
+                                        createChat(text);
+                                    }}>
+                                        Create Chat
+                                    </button>
+                                )}
+
                             </div>
                             {modalError && 
                                 <div className={styles.error}>
