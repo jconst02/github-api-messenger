@@ -20,7 +20,7 @@ function App() {
       <Routes>
         <Route path="*" element={<Login user={user} setUser={setUser} setToken={setToken} username={username} setUsername={setUsername}/>} />
         <Route path="/login" element={<Login user={user} setUser={setUser} setToken={setToken} username={username} setUsername={setUsername}/>} />
-        <Route path="/chat" element={<Chat user={user} username={username} token={token}/>} />
+        <Route path="/chat" element={<Chat user={user} username={username} token={token} />} />
         <Route path="/chatlist" element={<ChatList user={user} username={username} token={token}/>}></Route>
       </Routes>
     </Router>

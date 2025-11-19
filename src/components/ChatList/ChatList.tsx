@@ -5,6 +5,7 @@ import styles from './ChatList.module.css';
 
 interface ChatItem {
     id: string;
+    commentId: string;
     name: string
 }
 
@@ -18,7 +19,7 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
     if(!user) {
         return <Navigate to="/login" replace />;
     }
-
+    
     const [chatList, setChatList] = useState<ChatItem[]>([]);
     const [gistChatFile, setGistChatFile] = useState<string|undefined>(undefined);
     const [showModal, setShowModal] = useState<Boolean>(false);
@@ -63,12 +64,13 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
         }
 
         fetchOrCreateGist();
-    }, [])
+    }, []);
 
     useEffect(() => {
         if (!gistChatFile || !token) return;
 
         fetch(gistChatFile, {
+            cache: 'no-store',
             headers : {
                 Authorization: `token ${token}`
             }
@@ -77,19 +79,23 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
             console.log(data)
             const mapped = data.map((comment: any) => {
                 const [id, name] = comment.body.split("\r\n")
-                console.log(comment.body.split("\r\n"));
-                return { id: id, name: name}
-            })
+                return { 
+                    id: id, 
+                    commentId: comment.id, 
+                    name: name
+                }
+            });
             setChatList(mapped);
-            console.log(mapped);
         })
     }, [gistChatFile, token, updateCounter]);
 
     const navigate = useNavigate();
+
     const openChat = (chat: ChatItem) => {
         navigate('/chat', {
             state: {
-                chat
+                chat,
+                gistChatFile,
             }
         });
     }
@@ -161,9 +167,6 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
         addChat(newGist.id);
     }
 
-    const deleteChat = async(gist_id: string) => {
-
-    }
 
     return (
         <>

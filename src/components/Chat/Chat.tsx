@@ -3,9 +3,10 @@ import styles from './Chat.module.css';
 import { auth, provider } from '../../FirebaseConfig';
 import { type User } from 'firebase/auth';
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import menu from "../../assets/menu-symbol-of-three-parallel-lines.svg";
 import Message from '../Message/Message';
+import { type Dispatch, type SetStateAction } from 'react';
 
 interface ChatProps {
     user: User | null;
@@ -19,13 +20,15 @@ const Chat = ({ user, token, username } : ChatProps) => {
         return <Navigate to="/login" replace />;
     }
 
+    const navigate = useNavigate();
     const [messages, setMessages] = useState<any[]>([]);
     const [chatName, setChatName] = useState<string | null>(null);
     const [textValue, setTextValue] = useState('');
     const messagesRef = useRef<HTMLDivElement | null>(null);
 
     const location = useLocation();
-    const chat =  location.state?.chat;
+
+    const {chat, gistChatFile } = location.state;
 
 
 
@@ -92,11 +95,23 @@ const Chat = ({ user, token, username } : ChatProps) => {
         setTextValue(event.target.value);
     }
 
+    const leaveChat = async() =>  {
+        const res = await fetch(`${gistChatFile}/${chat.commentId}`, {
+            method: 'DELETE',
+            headers : {
+                Authorization: `token ${token}`
+            },
+        });
+        if (res.ok) {
+            navigate('/chatlist');
+        }
+    }
+
     return (
         <>
             <div className={styles.chat}>
                 <div className={styles.bar}>
-                    <button>
+                    <button className={styles.backbutton}>
                         <img src={menu} alt='' />
                     </button>
                     <div>
@@ -105,6 +120,10 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     <div className={styles.chatId}>
                         Chat ID: {chat.id}
                     </div>
+                    <button className={styles.leavebutton}
+                    onClick={leaveChat}>
+                        Leave chat
+                    </button>
                 </div>
                 <div className={styles.messages} ref={messagesRef}>
                 {messages.map((message, i) => (
