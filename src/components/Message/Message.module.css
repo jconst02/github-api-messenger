@@ -12,19 +12,23 @@
 
 .messagecontent {
     padding: 0.5rem;
-    color:rgb(23, 184, 50);
-    border: solid;
+    color:rgb(255, 255, 255);
+    background-color: rgb(23, 184, 50);
+    border: solid rgb(23, 184, 50);
     border-width: 3px;
     width: fit-content;
     border-radius: 6px;
+    font-size: 1.2rem;
 }
 
 .ownmessagecontent {
     padding: 0.5rem;
-    color:rgb(19, 138, 218);
-    border: solid;
+    color:rgb(255, 255, 255);
+    background-color: rgb(19, 138, 218);
+    border: solid rgb(19, 138, 218);
     border-width: 3px;
     border-radius: 6px;
+    font-size: 1.2rem
 }
 
 .time {

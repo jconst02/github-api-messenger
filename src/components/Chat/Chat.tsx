@@ -43,7 +43,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
         getMessages();
 
-        let intervalId = setInterval(getMessages, 500000000);
+        let intervalId = setInterval(getMessages, 50000000);
         return () => clearInterval(intervalId);
     }, [token])
 
@@ -66,13 +66,18 @@ const Chat = ({ user, token, username } : ChatProps) => {
             const data = await res.json();
             console.log(data)
             setMessages(data);
+            console.log(data);
         } catch(error) {
             console.log(error);
         }
 
     };
 
-    const sendMessage = async () => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (textValue.trim() === '') return;
+
         try {
             const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
                 method: 'POST',
@@ -130,7 +135,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     // <div className={styles.message} key={i}>{messages.body}</div>
                     <Message 
                         key={i}
-                        username={username}
+                        username={message.user.login}
                         message={message.body}
                         time={`${new Date(message.created_at).getHours()}:${new Date(message.created_at).getMinutes().toString().padStart(2, "0")}`}
                         isOwn={message.user.login === username}
@@ -138,14 +143,21 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     />
                 ))}
                 </div>
-                <div className={styles.inputBar}>
-                    <input type="text" className={styles.input} onChange={handleInputChange} value={textValue}/>
+                <form className={styles.inputBar} onSubmit={handleSubmit}>
+                    <input 
+                        type="text" 
+                        className={styles.input} 
+                        onChange={handleInputChange} 
+                        value={textValue}
+                    />
                     <button 
-                    className={styles.button}
-                    disabled={textValue.trim() === ''}
-                    onClick={sendMessage}
-                    >Send</button>
-                </div>
+                        className={styles.button}
+                        type='submit'
+                        disabled={textValue.trim() === ''}
+                    >
+                        Send
+                    </button>
+                </form>
             </div>
         </>
     )
