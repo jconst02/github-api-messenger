@@ -43,9 +43,9 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
         getMessages();
 
-        let intervalId = setInterval(getMessages, 50000000);
+        let intervalId = setInterval(getMessages, 5000);
         return () => clearInterval(intervalId);
-    }, [token])
+    }, [chat.id, token])
 
 
     //TODO: update this so just used once at the start not everytime after message sent.
@@ -64,9 +64,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                 }
             });
             const data = await res.json();
-            console.log(data)
             setMessages(data);
-            console.log(data);
         } catch(error) {
             console.log(error);
         }
@@ -88,8 +86,6 @@ const Chat = ({ user, token, username } : ChatProps) => {
                 body: JSON.stringify({ body: textValue })
             })
             setTextValue('');
-            const data = await res.json();
-            console.log("Sent message:", data)
             await getMessages();
         } catch(error) {
             console.log(error);
@@ -131,10 +127,9 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     </button>
                 </div>
                 <div className={styles.messages} ref={messagesRef}>
-                {messages.map((message, i) => (
-                    // <div className={styles.message} key={i}>{messages.body}</div>
+                {messages.map((message) => (
                     <Message 
-                        key={i}
+                        key={message.id}
                         username={message.user.login}
                         message={message.body}
                         time={`${new Date(message.created_at).getHours()}:${new Date(message.created_at).getMinutes().toString().padStart(2, "0")}`}
