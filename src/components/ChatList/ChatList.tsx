@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { type User } from 'firebase/auth';
-import { Navigate, data, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import styles from './ChatList.module.css';
 
 interface ChatItem {
@@ -40,7 +40,6 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
             const gist = data.find((gist: any) => gist.description === 'gitmessagefile');
             if (gist) {
                 setGistChatFile(gist.comments_url);
-                console.log(gist.comments_url);
             }
             else {
                 const createRes = await fetch('https://api.github.com/gists', {
@@ -76,7 +75,6 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
             }
         }).then(res => res.json())
         .then(data => {
-            console.log(data)
             const mapped = data.map((comment: any) => {
                 const [id, name] = comment.body.split("\r\n")
                 return { 
@@ -110,8 +108,8 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
         if (!res.ok) {
             return { exists: false, name: null };
         }
+
         const data = await res.json();
-        console.log("added",data);
 
         return {
             exists: true,
@@ -162,8 +160,8 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
                 }
             })
         });
+
         const newGist = await createRes.json();
-        console.log(newGist);
         addChat(newGist.id);
     }
 

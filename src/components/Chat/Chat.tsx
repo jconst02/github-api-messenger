@@ -1,12 +1,10 @@
 
 import styles from './Chat.module.css';
-import { auth, provider } from '../../FirebaseConfig';
 import { type User } from 'firebase/auth';
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import menu from "../../assets/menu-symbol-of-three-parallel-lines.svg";
 import Message from '../Message/Message';
-import { type Dispatch, type SetStateAction } from 'react';
 
 interface ChatProps {
     user: User | null;
@@ -15,67 +13,64 @@ interface ChatProps {
 }
 
 const Chat = ({ user, token, username } : ChatProps) => {
-    
-    if(!user) {
-        return <Navigate to="/login" replace />;
-    }
+    if(!user) return <Navigate to="/login" replace />;
+
 
     const navigate = useNavigate();
+    const location = useLocation();
+    const {chat, gistChatFile } = location.state;
+
     const [messages, setMessages] = useState<any[]>([]);
     const [chatName, setChatName] = useState<string | null>(null);
     const [textValue, setTextValue] = useState('');
     const messagesRef = useRef<HTMLDivElement | null>(null);
 
-    const location = useLocation();
-
-    const {chat, gistChatFile } = location.state;
-
-
 
     useEffect(() => {
-
-        fetch(`https://api.github.com/gists/${chat.id}`, {
-            headers : {
-                Authorization: `token ${token}`
+        const fetchChatName = async () => {
+            try {
+                const res = await fetch(`https://api.github.com/gists/${chat.id}`, {
+                    headers : { Authorization: `token ${token}` }
+                });
+                const data = await res.json();
+                const filename = Object.keys(data.files)[0]
+                setChatName(data.files[filename].content);
+            } catch (error) {
+                console.error("Error getting chat name:", error);
             }
-        }).then(res => res.json())
-        .then(data => setChatName(data.files['gistfile1.txt'].content));
 
-        getMessages();
-
-        let intervalId = setInterval(getMessages, 5000);
-        return () => clearInterval(intervalId);
+        }
+        
+        fetchChatName();
     }, [chat.id, token])
 
 
-    //TODO: update this so just used once at the start not everytime after message sent.
-    useLayoutEffect(() => {
-        if (messagesRef.current){
-            messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
-        }
-    }, [messages]);
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
+                    cache: 'no-store',
+                    headers : { Authorization: `token ${token}` }
+                });
+                const data = await res.json();
+                setMessages(data);
+            } catch(error) {
+                console.error("Unable to retrieve messages:", error);
+            }
+            
+        };
 
-    const getMessages = async () => {
-        try {
-            const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
-                cache: 'no-store',
-                headers : {
-                    Authorization: `token ${token}`
-                }
-            });
-            const data = await res.json();
-            setMessages(data);
-        } catch(error) {
-            console.log(error);
-        }
+        fetchMessages();
+        let intervalId = setInterval(fetchMessages, 5000);
+        return () => clearInterval(intervalId);
+    }, [chat.id, token])
 
-    };
-
+    
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
+        
         if (textValue.trim() === '') return;
-
+        
         try {
             const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
                 method: 'POST',
@@ -86,15 +81,19 @@ const Chat = ({ user, token, username } : ChatProps) => {
                 body: JSON.stringify({ body: textValue })
             })
             setTextValue('');
-            await getMessages();
+            const data = await res.json();
+            setMessages(prev => [...prev, data]);
         } catch(error) {
             console.log(error);
         }
     }
-
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setTextValue(event.target.value);
-    }
+    
+    //TODO: update this so just used once at the start not everytime after message sent.
+    useLayoutEffect(() => {
+        if (messagesRef.current){
+            messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     const leaveChat = async() =>  {
         const res = await fetch(`${gistChatFile}/${chat.commentId}`, {
@@ -142,7 +141,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     <input 
                         type="text" 
                         className={styles.input} 
-                        onChange={handleInputChange} 
+                        onChange={e => setTextValue(e.target.value)} 
                         value={textValue}
                     />
                     <button 
