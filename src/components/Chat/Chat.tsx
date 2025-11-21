@@ -33,7 +33,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     headers : { Authorization: `token ${token}` }
                 });
                 const data = await res.json();
-                const filename = Object.keys(data.files)[0]
+                const filename = Object.keys(data.files)[0];
                 setChatName(data.files[filename].content);
             } catch (error) {
                 console.error("Error getting chat name:", error);
@@ -53,7 +53,11 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     headers : { Authorization: `token ${token}` }
                 });
                 const data = await res.json();
-                setMessages(data);
+                setMessages(prev => {
+                    if (prev.length === 0 && data.length === 0) return prev;
+                    if (prev[prev.length - 1]?.id === data[data.length - 1]?.id) return prev;
+                    return data;
+                });
             } catch(error) {
                 console.error("Unable to retrieve messages:", error);
             }
@@ -61,7 +65,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
         };
 
         fetchMessages();
-        let intervalId = setInterval(fetchMessages, 5000);
+        let intervalId = setInterval(fetchMessages, 5000000);
         return () => clearInterval(intervalId);
     }, [chat.id, token])
 
@@ -84,14 +88,17 @@ const Chat = ({ user, token, username } : ChatProps) => {
             const data = await res.json();
             setMessages(prev => [...prev, data]);
         } catch(error) {
-            console.log(error);
+            console.error("Error sending message:", error);
         }
     }
     
-    //TODO: update this so just used once at the start not everytime after message sent.
+
+    //TODO: make sure this works
     useLayoutEffect(() => {
         if (messagesRef.current){
-            messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+            if (messagesRef.current?.scrollHeight - (messagesRef.current?.scrollTop + messagesRef.current?.clientHeight) < 150){
+                messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+            }
         }
     }, [messages]);
 
@@ -114,14 +121,9 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     <button className={styles.backbutton}>
                         <img src={menu} alt='' />
                     </button>
-                    <div>
-                        {chatName}
-                    </div>
-                    <div className={styles.chatId}>
-                        Chat ID: {chat.id}
-                    </div>
-                    <button className={styles.leavebutton}
-                    onClick={leaveChat}>
+                    <div>{chatName}</div>
+                    <div className={styles.chatId}>Chat ID: {chat.id}</div>
+                    <button className={styles.leavebutton} onClick={leaveChat}>
                         Leave chat
                     </button>
                 </div>
@@ -131,7 +133,10 @@ const Chat = ({ user, token, username } : ChatProps) => {
                         key={message.id}
                         username={message.user.login}
                         message={message.body}
-                        time={`${new Date(message.created_at).getHours()}:${new Date(message.created_at).getMinutes().toString().padStart(2, "0")}`}
+                        time={`${new Date(message.created_at).getHours()}:${new Date(message.created_at)
+                            .getMinutes()
+                            .toString()
+                            .padStart(2, "0")}`}
                         isOwn={message.user.login === username}
 
                     />
@@ -140,14 +145,12 @@ const Chat = ({ user, token, username } : ChatProps) => {
                 <form className={styles.inputBar} onSubmit={handleSubmit}>
                     <input 
                         type="text" 
-                        className={styles.input} 
+                        className={styles.input}
+                        placeholder='Message'
                         onChange={e => setTextValue(e.target.value)} 
                         value={textValue}
                     />
-                    <button 
-                        className={styles.button}
-                        type='submit'
-                        disabled={textValue.trim() === ''}
+                    <button className={styles.button} type='submit' disabled={textValue.trim() === ''}
                     >
                         Send
                     </button>
