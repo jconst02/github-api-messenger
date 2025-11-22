@@ -44,30 +44,80 @@ const Chat = ({ user, token, username } : ChatProps) => {
         fetchChatName();
     }, [chat.id, token])
 
+    const perPage = 100;
+    let lastPage = 1;
+
+    const fetchAllMessages = async () => {
+        try {
+
+            let allComments: any[] = []; 
+            let page = 1;
+
+            while (true) {
+
+                const params = new URLSearchParams({
+                    per_page: perPage.toString(),
+                    page: page.toString()
+                });
+
+                const res = await fetch(`https://api.github.com/gists/${chat.id}/comments?${params.toString()}`, {
+                    cache: 'no-store',
+                    headers : { Authorization: `token ${token}` },
+                });
+
+                const data = await res.json();
+
+                if (!data.length) return;
+
+                allComments = [...allComments, ...data];
+
+                if (data.length < perPage) break;
+
+                page++;
+            }
+
+            setMessages(allComments);
+            lastPage = page;
+        } catch(error) {
+            console.error("Unable to retrieve messages:", error);
+        }
+    }
+
+    const fetchNewMessages = async () => {
+        try {
+            const params = new URLSearchParams({
+                per_page: perPage.toString(),
+                page: lastPage.toString()
+            });
+
+            const res = await fetch(`https://api.github.com/gists/${chat.id}/comments?${params.toString()}`, {
+                cache: 'no-store',
+                headers : { Authorization: `token ${token}` }
+            });
+
+            const data = await res.json();
+
+            setMessages(prev => {
+                if (data.length === 0) return prev;
+                const currentMessages = new Set(prev.map(m => m.id));
+                const newMessages = data.filter((m: any) => !currentMessages.has(m.id));
+                if (newMessages.length === 0) return prev;
+                return [...prev, ...newMessages];
+            });
+
+            if (data.length === perPage) lastPage++;
+
+        } catch(error) {
+            console.error("Unable to retrieve new messages:", error);
+        }
+    }
 
     useEffect(() => {
-        const fetchMessages = async () => {
-            try {
-                const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
-                    cache: 'no-store',
-                    headers : { Authorization: `token ${token}` }
-                });
-                const data = await res.json();
-                setMessages(prev => {
-                    if (prev.length === 0 && data.length === 0) return prev;
-                    if (prev[prev.length - 1]?.id === data[data.length - 1]?.id) return prev;
-                    return data;
-                });
-            } catch(error) {
-                console.error("Unable to retrieve messages:", error);
-            }
-            
-        };
 
-        fetchMessages();
-        let intervalId = setInterval(fetchMessages, 5000000);
+        fetchAllMessages();
+        let intervalId = setInterval(fetchNewMessages, 5000);
         return () => clearInterval(intervalId);
-    }, [chat.id, token])
+    }, []);
 
     
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -96,7 +146,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
     //TODO: make sure this works
     useLayoutEffect(() => {
         if (messagesRef.current){
-            if (messagesRef.current?.scrollHeight - (messagesRef.current?.scrollTop + messagesRef.current?.clientHeight) < 150){
+            if (messagesRef.current?.scrollHeight - (messagesRef.current?.scrollTop + messagesRef.current?.clientHeight) < 300){
                 messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
             }
         }
