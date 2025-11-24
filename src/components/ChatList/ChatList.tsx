@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { type User } from 'firebase/auth';
 import { Navigate, useNavigate } from 'react-router-dom';
 import styles from './ChatList.module.css';
+import Modal from "../Modal/Modal";
 
 interface ChatItem {
     id: string;
@@ -22,8 +23,10 @@ const ChatList = ({ user, token } : ChatListProps) => {
     const [chatList, setChatList] = useState<ChatItem[]>([]);
     const [gistChatFile, setGistChatFile] = useState<string|undefined>(undefined);
     const [updateCounter, setUpdateCounter] = useState(0);
-
-    const [modal, setModal] = useState({ show: false, mode: "add" as "add" | "create", text: "", error: "" })
+    const [showModal, setShowModal] = useState(false);
+    const [mode, setMode] = useState<"add"|"create">("add");
+    const [text, setText] = useState("");
+    const [modalError, setModalError] = useState("");
     
     useEffect(() => {
         if (!token) return;
@@ -116,12 +119,12 @@ const ChatList = ({ user, token } : ChatListProps) => {
         const { exists, name } = await gistExists(gist_id);
 
         if (!exists) {
-            setModal(prev => ({...prev, error: "Gist with that ID does not exist"}));
+            setModalError("Gist with that ID does not exist");
             return;
         }
         
         if (chatList.some((chat) => chat.id === gist_id)){
-            setModal(prev => ({...prev, error: "Chat is already added"}));
+            setModalError("Chat is already added");
             return;
         }
 
@@ -133,7 +136,9 @@ const ChatList = ({ user, token } : ChatListProps) => {
             body: JSON.stringify({ body: `${gist_id}\r\n${name}` })
         });
 
-        setModal(prev => ({...prev, show: false, text: "", error: ""}))
+        setShowModal(false);
+        setText("");
+        setModalError("");
         setUpdateCounter(prev => prev + 1);
     }
 
@@ -162,16 +167,16 @@ const ChatList = ({ user, token } : ChatListProps) => {
         <>
             <div className={styles.chatlist}>
                 <div className={styles.bar}>
-                    <div>
-                        Chats
-                    </div>
+                    <div>Chats</div>
                     <button className={styles.addChatButton} onClick={() => { 
-                        setModal(prev => ({...prev, show: true, mode: "add"}));
+                        setShowModal(true);
+                        setMode("add");
                     }}>
                         Add Chat
                     </button>
                     <button className={styles.createChatButton} onClick={() => {
-                        setModal(prev => ({...prev, show: true, mode: "create"}));
+                        setShowModal(true);
+                        setMode("create")
                     }}>
                         Create Chat
                     </button>
@@ -187,46 +192,20 @@ const ChatList = ({ user, token } : ChatListProps) => {
                         </div>
                     ))}
                 </div>
-                { modal.show && (
-                    <div className={styles.modal}>
-                        <div className={styles.modalcontent}>
-                            <div>
-                                {modal.mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
-                            </div>
-                            <input 
-                                value={modal.text}
-                                onChange={(e) => setModal(prev => ({...prev, text: e.target.value}))}
-                            >
-                            </input>
-                            <div className={styles.buttonRow}>
-                                <button onClick={() => {
-                                    setModal(prev => ({...prev, show: false, text: "", error: ""}))
-                                }}>Cancel
-                                </button>
-                                {modal.mode === 'add' && (
-                                    <button onClick={() => {
-                                        addChat(modal.text);
-                                    }}>
-                                        Add Chat
-                                    </button>
-                                )}
-                                {modal.mode === 'create' && (
-                                    <button 
-                                    disabled={!modal.text}
-                                    onClick={() => {
-                                        createChat(modal.text);
-                                    }}>
-                                        Create Chat
-                                    </button>
-                                )}
-                            </div>
-                            {modal.error && 
-                                <div className={styles.error}>
-                                    {modal.error}
-                                </div>
-                            }
-                        </div>
-                    </div>
+                { showModal && (
+                    <Modal
+                        title={mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
+                        input={text}
+                        submitLabel={mode === 'add' ? "Add Chat" : "Create Chat"}
+                        error={modalError}
+                        setText={setText}
+                        onCancel={() => {
+                            setShowModal(false);
+                            setText("");
+                            setModalError("");
+                        }}
+                        onSubmit={() => {mode === 'add' ? addChat(text) : createChat(text)}}
+                    />
                 )}
 
             </div>
