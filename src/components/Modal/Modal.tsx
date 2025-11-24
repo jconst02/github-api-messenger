@@ -1,45 +1,41 @@
 import styles from './Modal.module.css';
-import { type Dispatch, type SetStateAction } from 'react';
 
 interface ModalProps {
     title: string;
-    input: string;
+    inputValue: string;
     submitLabel: string;
-    error: string;
-    setText: Dispatch<SetStateAction<string>>;
+    error?: string;
+    onInputChange: (value: string) =>  void;
     onCancel: () => void;
     onSubmit: () => void;
 }
 
 const Modal = ({ 
     title,
-    input,
+    inputValue,
     submitLabel,
     error,
-    setText,
+    onInputChange,
     onCancel,
     onSubmit 
 }: ModalProps) => {
 
 
     return (
-        <>
-            <div className={styles.modal}>
-                <div className={styles.modalcontent}>
-                    <div>{title}</div>
-                    <input 
-                        value={input}
-                        onChange={(e) => setText(e.target.value)}
-                    >
-                    </input>
-                    <div className={styles.buttonRow}>
-                        <button onClick={onCancel}>Cancel</button>
-                        <button disabled={!input} onClick={onSubmit}>{submitLabel}</button>
-                    </div>
-                    {error && <div className={styles.error}>{error}</div>}
+        <div className={styles.modal}>
+            <div className={styles.modalcontent}>
+                <div>{title}</div>
+                <input 
+                    value={inputValue}
+                    onChange={(e) => onInputChange(e.target.value)}
+                />
+                <div className={styles.buttonRow}>
+                    <button onClick={onCancel}>Cancel</button>
+                    <button disabled={!inputValue} onClick={onSubmit}>{submitLabel}</button>
                 </div>
+                {error && <div className={styles.error}>{error}</div>}
             </div>
-        </>
+        </div>
     )
 };
 

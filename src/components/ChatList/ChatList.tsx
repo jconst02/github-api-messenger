@@ -96,7 +96,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
         });
     }
 
-    const gistExists = async (gist_id: String) => {
+    const gistExists = async (gist_id: string) => {
         const res = await fetch(`https://api.github.com/gists/${gist_id}`, {
             headers : { Authorization: `token ${token}` }
         });
@@ -195,16 +195,16 @@ const ChatList = ({ user, token } : ChatListProps) => {
                 { showModal && (
                     <Modal
                         title={mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
-                        input={text}
+                        inputValue={text}
                         submitLabel={mode === 'add' ? "Add Chat" : "Create Chat"}
                         error={modalError}
-                        setText={setText}
+                        onInputChange={setText}
                         onCancel={() => {
                             setShowModal(false);
                             setText("");
                             setModalError("");
                         }}
-                        onSubmit={() => {mode === 'add' ? addChat(text) : createChat(text)}}
+                        onSubmit={() => mode === 'add' ? addChat(text) : createChat(text)}
                     />
                 )}
 
