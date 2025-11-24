@@ -11,11 +11,10 @@ interface ChatItem {
 
 interface ChatListProps {
     user: User | null;
-    username: string | null;
     token: string | undefined;
 }
 
-const ChatList = ({ user, token, username } : ChatListProps) => {
+const ChatList = ({ user, token } : ChatListProps) => {
     if(!user) {
         return <Navigate to="/login" replace />;
     }
@@ -31,22 +30,20 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
     useEffect(() => {
         const fetchOrCreateGist = async () => {
             const res = await fetch('https://api.github.com/gists', {
-                headers : {
-                    Authorization: `token ${token}`
-                }
+                headers : { Authorization: `token ${token}` }
             })
     
             const data = await res.json();
+
             const gist = data.find((gist: any) => gist.description === 'gitmessagefile');
+
             if (gist) {
                 setGistChatFile(gist.comments_url);
             }
             else {
                 const createRes = await fetch('https://api.github.com/gists', {
                     method: 'POST',
-                    headers : {
-                        Authorization: `token ${token}`
-                    },
+                    headers : { Authorization: `token ${token}` },
                     body: JSON.stringify({
                         description: "gitmessagefile",
                         public: false,
@@ -70,9 +67,7 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
 
         fetch(gistChatFile, {
             cache: 'no-store',
-            headers : {
-                Authorization: `token ${token}`
-            }
+            headers : { Authorization: `token ${token}` }
         }).then(res => res.json())
         .then(data => {
             const mapped = data.map((comment: any) => {
@@ -100,9 +95,7 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
 
     const gistExists = async (gist_id: String) => {
         const res = await fetch(`https://api.github.com/gists/${gist_id}`, {
-            headers : {
-                Authorization: `token ${token}`
-            }
+            headers : { Authorization: `token ${token}` }
         });
 
         if (!res.ok) {
@@ -119,7 +112,9 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
 
     const addChat = async(gist_id: String) => {
         if (!gistChatFile || !token) return;
+
         const { exists, name } = await gistExists(gist_id);
+
         if (!exists) {
             setModalError("Gist with that ID does not exist");
             return;
@@ -137,6 +132,7 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
             },
             body: JSON.stringify({ body: `${gist_id}\r\n${name}` })
         });
+
         setShowModal(false);
         setText("");
         setModalError("");
@@ -147,9 +143,7 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
         if (!gistChatFile || !token) return;
         const createRes = await fetch('https://api.github.com/gists', {
             method: 'POST',
-            headers : {
-                Authorization: `token ${token}`
-            },
+            headers : { Authorization: `token ${token}` },
             body: JSON.stringify({
                 description: chatName,
                 public: false,
@@ -230,7 +224,6 @@ const ChatList = ({ user, token, username } : ChatListProps) => {
                                         Create Chat
                                     </button>
                                 )}
-
                             </div>
                             {modalError && 
                                 <div className={styles.error}>
