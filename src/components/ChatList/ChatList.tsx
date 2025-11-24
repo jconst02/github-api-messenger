@@ -22,7 +22,6 @@ const ChatList = ({ user, token } : ChatListProps) => {
     
     const [chatList, setChatList] = useState<ChatItem[]>([]);
     const [gistChatFile, setGistChatFile] = useState<string|undefined>(undefined);
-    const [updateCounter, setUpdateCounter] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [mode, setMode] = useState<"add"|"create">("add");
     const [text, setText] = useState("");
@@ -83,7 +82,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
             });
             setChatList(mapped);
         })
-    }, [gistChatFile, token, updateCounter]);
+    }, [gistChatFile, token]);
 
     const navigate = useNavigate();
 
@@ -113,7 +112,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
         }
     }
 
-    const addChat = async(gist_id: String) => {
+    const addChat = async(gist_id: string) => {
         if (!gistChatFile || !token) return;
 
         const { exists, name } = await gistExists(gist_id);
@@ -128,7 +127,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
             return;
         }
 
-        await fetch(gistChatFile, {
+        const res = await fetch(gistChatFile, {
             method: 'POST',
             headers: {
                 Authorization: `token ${token}`
@@ -136,10 +135,17 @@ const ChatList = ({ user, token } : ChatListProps) => {
             body: JSON.stringify({ body: `${gist_id}\r\n${name}` })
         });
 
+        const newComment = await res.json();
+
+        setChatList(prev => [...prev,{
+            id: gist_id,
+            commentId: newComment.id,
+            name: name
+        }]);
+
         setShowModal(false);
         setText("");
         setModalError("");
-        setUpdateCounter(prev => prev + 1);
     }
 
     const createChat = async(chatName: string) => {
@@ -164,52 +170,50 @@ const ChatList = ({ user, token } : ChatListProps) => {
 
 
     return (
-        <>
-            <div className={styles.chatlist}>
-                <div className={styles.bar}>
-                    <div>Chats</div>
-                    <button className={styles.addChatButton} onClick={() => { 
-                        setShowModal(true);
-                        setMode("add");
-                    }}>
-                        Add Chat
-                    </button>
-                    <button className={styles.createChatButton} onClick={() => {
-                        setShowModal(true);
-                        setMode("create")
-                    }}>
-                        Create Chat
-                    </button>
-                </div>
-                <div className={styles.chatlistbody}>
-                    {chatList.map(chat => (
-                        <div
-                            key={chat.commentId}
-                            className={styles.chatpreview}
-                            onClick={() => openChat(chat)}
-                        >
-                            {chat.name}
-                        </div>
-                    ))}
-                </div>
-                { showModal && (
-                    <Modal
-                        title={mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
-                        inputValue={text}
-                        submitLabel={mode === 'add' ? "Add Chat" : "Create Chat"}
-                        error={modalError}
-                        onInputChange={setText}
-                        onCancel={() => {
-                            setShowModal(false);
-                            setText("");
-                            setModalError("");
-                        }}
-                        onSubmit={() => mode === 'add' ? addChat(text) : createChat(text)}
-                    />
-                )}
-
+        <div className={styles.chatlist}>
+            <div className={styles.bar}>
+                <div>Chats</div>
+                <button className={styles.addChatButton} onClick={() => { 
+                    setShowModal(true);
+                    setMode("add");
+                }}>
+                    Add Chat
+                </button>
+                <button className={styles.createChatButton} onClick={() => {
+                    setShowModal(true);
+                    setMode("create")
+                }}>
+                    Create Chat
+                </button>
             </div>
-        </>
+            <div className={styles.chatlistbody}>
+                {chatList.map(chat => (
+                    <div
+                        key={chat.commentId}
+                        className={styles.chatpreview}
+                        onClick={() => openChat(chat)}
+                    >
+                        {chat.name}
+                    </div>
+                ))}
+            </div>
+            { showModal && (
+                <Modal
+                    title={mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
+                    inputValue={text}
+                    submitLabel={mode === 'add' ? "Add Chat" : "Create Chat"}
+                    error={modalError}
+                    onInputChange={setText}
+                    onCancel={() => {
+                        setShowModal(false);
+                        setText("");
+                        setModalError("");
+                    }}
+                    onSubmit={() => mode === 'add' ? addChat(text) : createChat(text)}
+                />
+            )}
+
+        </div>
     )
 }
 
