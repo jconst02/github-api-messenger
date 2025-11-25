@@ -27,7 +27,8 @@ const ChatList = ({ user, token } : ChatListProps) => {
     const [text, setText] = useState("");
     const [modalError, setModalError] = useState("");
     const [pageError, setPageError] = useState("");
-    
+    const [isLoading, setIsLoading] = useState(false);
+
     useEffect(() => {
         if (!token) return;
 
@@ -158,6 +159,8 @@ const ChatList = ({ user, token } : ChatListProps) => {
         if (!gistChatFile || !token) return;
 
         try {
+            setIsLoading(true);
+
             const { exists, name } = await gistExists(gist_id);
 
             if (!exists) {
@@ -194,13 +197,16 @@ const ChatList = ({ user, token } : ChatListProps) => {
         } catch(error) {
             console.error(error);
             setModalError("Failed to add chat. Try again.");
-        };
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     const createChat = async(chatName: string) => {
         if (!gistChatFile || !token) return;
 
         try {
+            setIsLoading(true);
 
             const createRes = await fetch('https://api.github.com/gists', {
                 method: 'POST',
@@ -223,6 +229,8 @@ const ChatList = ({ user, token } : ChatListProps) => {
         } catch(error) {
             console.error(error);
             setModalError("Failed to create chat. Try again.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -267,7 +275,11 @@ const ChatList = ({ user, token } : ChatListProps) => {
                             inputValue={text}
                             submitLabel={mode === 'add' ? "Add Chat" : "Create Chat"}
                             error={modalError}
-                            onInputChange={setText}
+                            isLoading={isLoading}
+                            onInputChange={(value) => {
+                                setText(value);
+                                if (modalError) setModalError("");
+                            }}
                             onCancel={() => {
                                 setShowModal(false);
                                 setText("");

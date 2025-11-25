@@ -5,6 +5,7 @@ interface ModalProps {
     inputValue: string;
     submitLabel: string;
     error?: string;
+    isLoading?: boolean;
     onInputChange: (value: string) =>  void;
     onCancel: () => void;
     onSubmit: () => void;
@@ -15,6 +16,7 @@ const Modal = ({
     inputValue,
     submitLabel,
     error,
+    isLoading,
     onInputChange,
     onCancel,
     onSubmit 
@@ -31,7 +33,9 @@ const Modal = ({
                 />
                 <div className={styles.buttonRow}>
                     <button onClick={onCancel}>Cancel</button>
-                    <button disabled={!inputValue} onClick={onSubmit}>{submitLabel}</button>
+                    <button disabled={!inputValue} onClick={onSubmit}>
+                        {isLoading ? <div className={styles.loader}/> : submitLabel}
+                    </button>
                 </div>
                 {error && <div className={styles.error}>{error}</div>}
             </div>
