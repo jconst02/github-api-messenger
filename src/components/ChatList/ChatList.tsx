@@ -26,59 +26,69 @@ const ChatList = ({ user, token } : ChatListProps) => {
     const [mode, setMode] = useState<"add"|"create">("add");
     const [text, setText] = useState("");
     const [modalError, setModalError] = useState("");
+    const [pageError, setPageError] = useState("");
     
     useEffect(() => {
         if (!token) return;
 
-        //TODO: error handle
         const fetchOrCreateGist = async () => {
-            const per_page = 100;
-            let page = 1;
+            try {
+                const per_page = 100;
+                let page = 1;
 
-            let gist = undefined;
+                let gist = null;
 
-            while (true){
-                const params = new URLSearchParams({
-                    per_page: per_page.toString(),
-                    page: page.toString()
-                });
+                while (!gist){
+                    const params = new URLSearchParams({
+                        per_page: per_page.toString(),
+                        page: page.toString()
+                    });
 
-                const res = await fetch(`https://api.github.com/gists?${params.toString()}`, {
-                    headers : { Authorization: `token ${token}` }
-                });
-        
-                const data = await res.json();
+                    const res = await fetch(`https://api.github.com/gists?${params.toString()}`, {
+                        headers : { Authorization: `token ${token}` }
+                    });
+            
+                    if (!res.ok) throw Error(`Failed to fetch gists: ${res.status}`);
 
-                if (!data.length) break;
+                    const data = await res.json();
 
-                gist = data.find((gist: any) => gist.description === 'gitmessagefile');
+                    if (!data.length) break;
 
-                if (gist || data.length < per_page) break;
+                    gist = data.find((gist: any) => gist.description === 'gitmessagefile');
 
-                page += 1;
-            }
+                    if (data.length < per_page) break;
 
-            if (gist) {
-                setGistChatFile(gist.comments_url);
-            }
-            else {
-                const createRes = await fetch('https://api.github.com/gists', {
-                    method: 'POST',
-                    headers : { Authorization: `token ${token}` },
-                    body: JSON.stringify({
-                        description: "gitmessagefile",
-                        public: false,
-                        files: {
-                            "gistfile1.txt": {
-                                content: "gitmessagefile"
+                    page += 1;
+                }
+
+                if (gist) {
+                    setGistChatFile(gist.comments_url);
+                }
+                else {
+                    const createRes = await fetch('https://api.github.com/gists', {
+                        method: 'POST',
+                        headers : { Authorization: `token ${token}` },
+                        body: JSON.stringify({
+                            description: "gitmessagefile",
+                            public: false,
+                            files: {
+                                "gistfile1.txt": {
+                                    content: "gitmessagefile"
+                                }
                             }
-                        }
-                    })
-                });
-                const newGist = await createRes.json();
-                setGistChatFile(newGist.comments_url);
+                        })
+                    });
+
+                    if (!createRes.ok) throw Error(`Failed to create gists: ${createRes.status}`);
+
+                    const newGist = await createRes.json();
+                    setGistChatFile(newGist.comments_url);
+                }
+            } catch(error) {
+                console.error(error);
+                setPageError("Failed to initialize. Please refresh.");
             }
-        }
+        };
 
         fetchOrCreateGist();
     }, [token]);
@@ -86,22 +96,33 @@ const ChatList = ({ user, token } : ChatListProps) => {
     useEffect(() => {
         if (!gistChatFile || !token) return;
 
-        //TODO: error handle
-        fetch(gistChatFile, {
-            cache: 'no-store',
-            headers : { Authorization: `token ${token}` }
-        }).then(res => res.json())
-        .then(data => {
-            const mapped = data.map((comment: any) => {
-                const [id, name] = comment.body.split(/\r?\n/)
-                return { 
-                    id: id, 
-                    commentId: comment.id, 
-                    name: name
-                }
-            });
-            setChatList(mapped);
-        });
+        const fetchChats = async() => {
+            try {
+                const res = await fetch(gistChatFile, {
+                    cache: 'no-store',
+                    headers : { Authorization: `token ${token}` }
+                });
+    
+                if (!res.ok) throw Error(`Failed to fetch gist comments: ${res.status}`);
+    
+                const data = await res.json();
+    
+                const mapped = data.map((comment: any) => {
+                    const [id, name] = comment.body.split(/\r?\n/);
+                    return { 
+                        id: id, 
+                        commentId: comment.id, 
+                        name: name
+                    }
+                });
+                setChatList(mapped);
+            } catch(error) {
+                console.error(error);
+                setPageError("Failed to load chats. Please refresh.");
+            };
+        };
+        
+        fetchChats();
     }, [gistChatFile, token]);
 
     const navigate = useNavigate();
@@ -113,7 +134,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
                 gistChatFile,
             }
         });
-    }
+    };
 
     //TODO: error handle
     const gistExists = async (gist_id: string) => {
@@ -131,109 +152,131 @@ const ChatList = ({ user, token } : ChatListProps) => {
             exists: true,
             name: data.files[Object.keys(data.files)[0]].content
         }
-    }
+    };
 
-    //TODO: error handle
     const addChat = async(gist_id: string) => {
         if (!gistChatFile || !token) return;
 
-        const { exists, name } = await gistExists(gist_id);
+        try {
+            const { exists, name } = await gistExists(gist_id);
 
-        if (!exists) {
-            setModalError("Gist with that ID does not exist");
-            return;
-        }
-        
-        if (chatList.some((chat) => chat.id === gist_id)){
-            setModalError("Chat is already added");
-            return;
-        }
+            if (!exists) {
+                setModalError("Gist with that ID does not exist");
+                return;
+            }
+            
+            if (chatList.some((chat) => chat.id === gist_id)){
+                setModalError("Chat is already added");
+                return;
+            }
 
-        const res = await fetch(gistChatFile, {
-            method: 'POST',
-            headers: {
-                Authorization: `token ${token}`
-            },
-            body: JSON.stringify({ body: `${gist_id}\r\n${name}` })
-        });
+            const res = await fetch(gistChatFile, {
+                method: 'POST',
+                headers: {
+                    Authorization: `token ${token}`
+                },
+                body: JSON.stringify({ body: `${gist_id}\r\n${name}` })
+            });
 
-        const newComment = await res.json();
+            if (!res.ok) throw Error(`Failed to add comment: ${res.status}`);
 
-        setChatList(prev => [...prev,{
-            id: gist_id,
-            commentId: newComment.id,
-            name: name
-        }]);
+            const newComment = await res.json();
 
-        setShowModal(false);
-        setText("");
-        setModalError("");
+            setChatList(prev => [...prev,{
+                id: gist_id,
+                commentId: newComment.id,
+                name: name
+            }]);
+
+            setShowModal(false);
+            setText("");
+            setModalError("");
+        } catch(error) {
+            console.error(error);
+            setModalError("Failed to add chat. Try again.");
+        };
     }
 
-    //TODO: error handle
     const createChat = async(chatName: string) => {
         if (!gistChatFile || !token) return;
-        const createRes = await fetch('https://api.github.com/gists', {
-            method: 'POST',
-            headers : { Authorization: `token ${token}` },
-            body: JSON.stringify({
-                description: chatName,
-                public: false,
-                files: {
-                    "gistfile1.txt": {
-                        content: chatName
+
+        try {
+
+            const createRes = await fetch('https://api.github.com/gists', {
+                method: 'POST',
+                headers : { Authorization: `token ${token}` },
+                body: JSON.stringify({
+                    description: chatName,
+                    public: false,
+                    files: {
+                        "gistfile1.txt": {
+                            content: chatName
+                        }
                     }
-                }
-            })
-        });
+                })
+            });
+            
+            if (!createRes.ok) throw Error(`Failed to create gist ${createRes.status}`);
 
-        const newGist = await createRes.json();
-        addChat(newGist.id);
-    }
-
+            const newGist = await createRes.json();
+            addChat(newGist.id);
+        } catch(error) {
+            console.error(error);
+            setModalError("Failed to create chat. Try again.");
+        }
+    };
 
     return (
         <div className={styles.chatlist}>
-            <div className={styles.bar}>
-                <div>Chats</div>
-                <button className={styles.addChatButton} onClick={() => { 
-                    setShowModal(true);
-                    setMode("add");
-                }}>
-                    Add Chat
-                </button>
-                <button className={styles.createChatButton} onClick={() => {
-                    setShowModal(true);
-                    setMode("create")
-                }}>
-                    Create Chat
-                </button>
-            </div>
-            <div className={styles.chatlistbody}>
-                {chatList.map(chat => (
-                    <div
-                        key={chat.commentId}
-                        className={styles.chatpreview}
-                        onClick={() => openChat(chat)}
-                    >
-                        {chat.name}
+            {pageError ? (
+                <div className={styles.pageError}>
+                    <p>{pageError}</p>
+                    <button onClick={() => window.location.reload()}>Refresh Page</button>
                     </div>
-                ))}
-            </div>
-            { showModal && (
-                <Modal
-                    title={mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
-                    inputValue={text}
-                    submitLabel={mode === 'add' ? "Add Chat" : "Create Chat"}
-                    error={modalError}
-                    onInputChange={setText}
-                    onCancel={() => {
-                        setShowModal(false);
-                        setText("");
-                        setModalError("");
-                    }}
-                    onSubmit={() => mode === 'add' ? addChat(text) : createChat(text)}
-                />
+            ) : (
+                <>
+                    <div className={styles.bar}>
+                        <div>Chats</div>
+                        <button className={styles.addChatButton} onClick={() => { 
+                            setShowModal(true);
+                            setMode("add");
+                        }}>
+                            Add Chat
+                        </button>
+                        <button className={styles.createChatButton} onClick={() => {
+                            setShowModal(true);
+                            setMode("create")
+                        }}>
+                            Create Chat
+                        </button>
+                    </div>
+                    <div className={styles.chatlistbody}>
+                        {chatList.map(chat => (
+                            <div
+                                key={chat.commentId}
+                                className={styles.chatpreview}
+                                onClick={() => openChat(chat)}
+                            >
+                                {chat.name}
+                            </div>
+                        ))}
+                    </div>
+                    { showModal && (
+                        <Modal
+                            title={mode === 'add' ? "Enter Gist ID" : "Enter chat name"}
+                            inputValue={text}
+                            submitLabel={mode === 'add' ? "Add Chat" : "Create Chat"}
+                            error={modalError}
+                            onInputChange={setText}
+                            onCancel={() => {
+                                setShowModal(false);
+                                setText("");
+                                setModalError("");
+                            }}
+                            onSubmit={() => mode === 'add' ? addChat(text) : createChat(text)}
+                        />
+                    )}
+                </>
             )}
 
         </div>
