@@ -3,12 +3,9 @@ import { type User } from 'firebase/auth';
 import { Navigate, useNavigate } from 'react-router-dom';
 import styles from './ChatList.module.css';
 import Modal from "../Modal/Modal";
-
-interface ChatItem {
-    id: string;
-    commentId: string;
-    name: string
-}
+import useGistFile from "../../hooks/useGistFile";
+import useChatLists from "../../hooks/useChatLists";
+import type { ChatItem } from "../../types/ChatItem";
 
 interface ChatListProps {
     user: User | null;
@@ -20,111 +17,16 @@ const ChatList = ({ user, token } : ChatListProps) => {
         return <Navigate to="/login" replace />;
     }
     
-    const [chatList, setChatList] = useState<ChatItem[]>([]);
-    const [gistChatFile, setGistChatFile] = useState<string|undefined>(undefined);
+    const [gistChatFile, gistError] = useGistFile(token);
+    const [chatList, setChatList, chatListError]  = useChatLists(gistChatFile, token);
+
+
     const [showModal, setShowModal] = useState(false);
     const [mode, setMode] = useState<"add"|"create">("add");
     const [text, setText] = useState("");
     const [modalError, setModalError] = useState("");
-    const [pageError, setPageError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        if (!token) return;
-
-        const fetchOrCreateGist = async () => {
-            try {
-                const per_page = 100;
-                let page = 1;
-
-                let gist = null;
-
-                while (!gist){
-                    const params = new URLSearchParams({
-                        per_page: per_page.toString(),
-                        page: page.toString()
-                    });
-
-                    const res = await fetch(`https://api.github.com/gists?${params.toString()}`, {
-                        headers : { Authorization: `token ${token}` }
-                    });
-            
-                    if (!res.ok) throw Error(`Failed to fetch gists: ${res.status}`);
-
-                    const data = await res.json();
-
-                    if (!data.length) break;
-
-                    gist = data.find((gist: any) => gist.description === 'gitmessagefile');
-
-                    if (data.length < per_page) break;
-
-                    page += 1;
-                }
-
-                if (gist) {
-                    setGistChatFile(gist.comments_url);
-                }
-                else {
-                    const createRes = await fetch('https://api.github.com/gists', {
-                        method: 'POST',
-                        headers : { Authorization: `token ${token}` },
-                        body: JSON.stringify({
-                            description: "gitmessagefile",
-                            public: false,
-                            files: {
-                                "gistfile1.txt": {
-                                    content: "gitmessagefile"
-                                }
-                            }
-                        })
-                    });
-
-                    if (!createRes.ok) throw Error(`Failed to create gists: ${createRes.status}`);
-
-                    const newGist = await createRes.json();
-                    setGistChatFile(newGist.comments_url);
-                }
-            } catch(error) {
-                console.error(error);
-                setPageError("Failed to initialize. Please refresh.");
-            }
-        };
-
-        fetchOrCreateGist();
-    }, [token]);
-
-    useEffect(() => {
-        if (!gistChatFile || !token) return;
-
-        const fetchChats = async() => {
-            try {
-                const res = await fetch(gistChatFile, {
-                    cache: 'no-store',
-                    headers : { Authorization: `token ${token}` }
-                });
-    
-                if (!res.ok) throw Error(`Failed to fetch gist comments: ${res.status}`);
-    
-                const data = await res.json();
-    
-                const mapped = data.map((comment: any) => {
-                    const [id, name] = comment.body.split(/\r?\n/);
-                    return { 
-                        id: id, 
-                        commentId: comment.id, 
-                        name: name
-                    }
-                });
-                setChatList(mapped);
-            } catch(error) {
-                console.error(error);
-                setPageError("Failed to load chats. Please refresh.");
-            };
-        };
-        
-        fetchChats();
-    }, [gistChatFile, token]);
 
     const navigate = useNavigate();
 
@@ -168,7 +70,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
                 return;
             }
             
-            if (chatList.some((chat) => chat.id === gist_id)){
+            if (chatList.some((chat: ChatItem) => chat.id === gist_id)){
                 setModalError("Chat is already added");
                 return;
             }
@@ -236,9 +138,9 @@ const ChatList = ({ user, token } : ChatListProps) => {
 
     return (
         <div className={styles.chatlist}>
-            {pageError ? (
+            {(gistError || chatListError) ? (
                 <div className={styles.pageError}>
-                    <p>{pageError}</p>
+                    <p>{gistError ? gistError : chatListError}</p>
                     <button onClick={() => window.location.reload()}>Refresh Page</button>
                     </div>
             ) : (
