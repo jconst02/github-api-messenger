@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
-export default function useGistFile(token: string | undefined): [
-    gistChatFile: string | undefined,
+export default function useGistId(token: string | undefined): [
+    gistId: string | undefined,
     error: string
 ] {
-    const [gistChatFile, setGistChatFile] = useState<string|undefined>(undefined);
+    const [gistId, setGistId] = useState<string|undefined>(undefined);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -41,7 +41,8 @@ export default function useGistFile(token: string | undefined): [
                 }
 
                 if (gist) {
-                    setGistChatFile(gist.comments_url);
+                    console.log(gist);
+                    setGistId(gist.id);
                 }
                 else {
                     const createRes = await fetch('https://api.github.com/gists', {
@@ -61,7 +62,7 @@ export default function useGistFile(token: string | undefined): [
                     if (!createRes.ok) throw Error(`Failed to create gists: ${createRes.status}`);
 
                     const newGist = await createRes.json();
-                    setGistChatFile(newGist.comments_url);
+                    setGistId(newGist.id);
                 }
             } catch(error) {
                 console.error(error);
@@ -72,5 +73,5 @@ export default function useGistFile(token: string | undefined): [
         fetchOrCreateGist();
     }, [token]);
 
-    return [gistChatFile, error];
+    return [gistId, error];
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import type { ChatItem } from "../types/ChatItem";
 
-export default function useChatLists(gistChatFile: string | undefined, token: string | undefined) : [
+export default function useChatLists(gistId: string | undefined, token: string | undefined) : [
     chatList: ChatItem[],
     setChatLists: Dispatch<SetStateAction<ChatItem[]>>,
     error: string
@@ -10,11 +10,11 @@ export default function useChatLists(gistChatFile: string | undefined, token: st
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (!gistChatFile || !token) return;
+        if (!gistId || !token) return;
 
         const fetchChats = async() => {
             try {
-                const res = await fetch(gistChatFile, {
+                const res = await fetch(`https://api.github.com/gists/${gistId}/comments`, {
                     cache: 'no-store',
                     headers : { Authorization: `token ${token}` }
                 });
@@ -39,7 +39,7 @@ export default function useChatLists(gistChatFile: string | undefined, token: st
         };
         
         fetchChats();
-    }, [gistChatFile, token]);
+    }, [gistId, token]);
 
     return [chatList, setChatLists, error];
 };

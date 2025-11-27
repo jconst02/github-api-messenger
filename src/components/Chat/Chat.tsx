@@ -18,7 +18,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const {chat, gistChatFile } = location.state;
+    const {chat, gistId } = location.state;
 
     const [messages, setMessages] = useState<any[]>([]);
     const [chatName, setChatName] = useState<string | null>(null);
@@ -153,7 +153,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
     }, [messages]);
 
     const leaveChat = async() =>  {
-        const res = await fetch(`${gistChatFile}/${chat.commentId}`, {
+        const res = await fetch(`https://api.github.com/gists/${gistId}/comments/${chat.commentId}`, {
             method: 'DELETE',
             headers : {
                 Authorization: `token ${token}`

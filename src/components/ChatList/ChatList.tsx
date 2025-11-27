@@ -3,7 +3,7 @@ import { type User } from 'firebase/auth';
 import { Navigate, useNavigate } from 'react-router-dom';
 import styles from './ChatList.module.css';
 import Modal from "../Modal/Modal";
-import useGistFile from "../../hooks/useGistFile";
+import useGistId from "../../hooks/useGistId";
 import useChatLists from "../../hooks/useChatLists";
 import type { ChatItem } from "../../types/ChatItem";
 
@@ -17,8 +17,8 @@ const ChatList = ({ user, token } : ChatListProps) => {
         return <Navigate to="/login" replace />;
     }
     
-    const [gistChatFile, gistError] = useGistFile(token);
-    const [chatList, setChatList, chatListError]  = useChatLists(gistChatFile, token);
+    const [gistId, gistError] = useGistId(token);
+    const [chatList, setChatList, chatListError]  = useChatLists(gistId, token);
 
 
     const [showModal, setShowModal] = useState(false);
@@ -34,7 +34,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
         navigate('/chat', {
             state: {
                 chat,
-                gistChatFile,
+                gistId,
             }
         });
     };
@@ -58,7 +58,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
     };
 
     const addChat = async(gist_id: string) => {
-        if (!gistChatFile || !token) return;
+        if (!gistId || !token) return;
 
         try {
             setIsLoading(true);
@@ -75,7 +75,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
                 return;
             }
 
-            const res = await fetch(gistChatFile, {
+            const res = await fetch(`https://api.github.com/gists/${gistId}/comments`, {
                 method: 'POST',
                 headers: {
                     Authorization: `token ${token}`
@@ -105,7 +105,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
     }
 
     const createChat = async(chatName: string) => {
-        if (!gistChatFile || !token) return;
+        if (!gistId || !token) return;
 
         try {
             setIsLoading(true);
