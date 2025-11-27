@@ -1,5 +1,6 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import type { ChatItem } from "../types/ChatItem";
+import { getGistComments } from "../api/gists";
 
 export default function useChatLists(gistId: string | undefined, token: string | undefined) : [
     chatList: ChatItem[],
@@ -14,16 +15,9 @@ export default function useChatLists(gistId: string | undefined, token: string |
 
         const fetchChats = async() => {
             try {
-                
-                //getGistComments
-                const res = await fetch(`https://api.github.com/gists/${gistId}/comments`, {
-                    cache: 'no-store',
-                    headers : { Authorization: `token ${token}` }
-                });
-    
-                if (!res.ok) throw Error(`Failed to fetch gist comments: ${res.status}`);
-    
-                const data = await res.json();
+
+                //getGistComments: Done
+                const data = await getGistComments(token, gistId);
     
                 const mapped = data.map((comment: any) => {
                     const [id, name] = comment.body.split(/\r?\n/);

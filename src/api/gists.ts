@@ -20,9 +20,9 @@ export const checkGistExists = async (
 
 export const getGistComments = async (
     token: string,
-    gist_id: number,
-    per_page: number,
-    page: string
+    gist_id: string,
+    per_page: number = 100,
+    page: number = 1
 ) => {
     const params = new URLSearchParams({
         per_page: per_page.toString(),

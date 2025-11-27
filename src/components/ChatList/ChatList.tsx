@@ -6,6 +6,7 @@ import Modal from "../Modal/Modal";
 import useGistId from "../../hooks/useGistId";
 import useChatLists from "../../hooks/useChatLists";
 import type { ChatItem } from "../../types/ChatItem";
+import { addGistComment, checkGistExists, createGist } from "../../api/gists";
 
 interface ChatListProps {
     user: User | null;
@@ -39,24 +40,6 @@ const ChatList = ({ user, token } : ChatListProps) => {
         });
     };
 
-    //checkGistExists. delete. dont need
-    const gistExists = async (gist_id: string) => {
-        const res = await fetch(`https://api.github.com/gists/${gist_id}`, {
-            headers : { Authorization: `token ${token}` }
-        });
-
-        if (!res.ok) {
-            return { exists: false, name: null };
-        }
-
-        const data = await res.json();
-
-        return {
-            exists: true,
-            name: data.files[Object.keys(data.files)[0]].content
-        }
-    };
-
     const addChat = async(gist_id: string) => {
         if (!gistId || !token) return;
 
@@ -64,7 +47,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
             setIsLoading(true);
 
             //checkGistExists
-            const { exists, name } = await gistExists(gist_id);
+            const { exists, name } = await checkGistExists(token, gist_id);
 
             if (!exists) {
                 setModalError("Gist with that ID does not exist");
@@ -75,19 +58,8 @@ const ChatList = ({ user, token } : ChatListProps) => {
                 setModalError("Chat is already added");
                 return;
             }
-
-            //addGistComment
-            const res = await fetch(`https://api.github.com/gists/${gistId}/comments`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `token ${token}`
-                },
-                body: JSON.stringify({ body: `${gist_id}\r\n${name}` })
-            });
-
-            if (!res.ok) throw Error(`Failed to add comment: ${res.status}`);
-
-            const newComment = await res.json();
+            //addGistComment: Done
+            const newComment = await addGistComment(token, gistId, `${gist_id}\r\n${name}`);
 
             setChatList(prev => [...prev,{
                 id: gist_id,
@@ -111,25 +83,8 @@ const ChatList = ({ user, token } : ChatListProps) => {
 
         try {
             setIsLoading(true);
-
-            //createGist
-            const createRes = await fetch('https://api.github.com/gists', {
-                method: 'POST',
-                headers : { Authorization: `token ${token}` },
-                body: JSON.stringify({
-                    description: chatName,
-                    public: false,
-                    files: {
-                        "gistfile1.txt": {
-                            content: chatName
-                        }
-                    }
-                })
-            });
-            
-            if (!createRes.ok) throw Error(`Failed to create gist ${createRes.status}`);
-
-            const newGist = await createRes.json();
+            //createGist: Done
+            const newGist = await createGist(token, chatName);
             addChat(newGist.id);
         } catch(error) {
             console.error(error);

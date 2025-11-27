@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import menu from "../../assets/menu-symbol-of-three-parallel-lines.svg";
 import Message from '../Message/Message';
+import { addGistComment, deleteGistComment, getGistComments, getGistName } from '../../api/gists';
 
 interface ChatProps {
     user: User | null;
@@ -13,7 +14,7 @@ interface ChatProps {
 }
 
 const Chat = ({ user, token, username } : ChatProps) => {
-    if(!user) return <Navigate to="/login" replace />;
+    if(!user || !token) return <Navigate to="/login" replace />;
 
 
     const navigate = useNavigate();
@@ -25,21 +26,16 @@ const Chat = ({ user, token, username } : ChatProps) => {
     const [textValue, setTextValue] = useState('');
     const messagesRef = useRef<HTMLDivElement | null>(null);
 
-    //getGistName
+    //getGistName: Done
     useEffect(() => {
         const fetchChatName = async () => {
             try {
-                const res = await fetch(`https://api.github.com/gists/${chat.id}`, {
-                    headers : { Authorization: `token ${token}` }
-                });
-                const data = await res.json();
-                const filename = Object.keys(data.files)[0];
-                setChatName(data.files[filename].content);
+                const chatName = await getGistName(token, chat.id);
+                setChatName(chatName);
             } catch (error) {
                 console.error("Error getting chat name:", error);
             }
-
-        }
+        };
         
         fetchChatName();
     }, [chat.id, token])
@@ -49,23 +45,12 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
     const fetchAllMessages = async () => {
         try {
-
             let allComments: any[] = []; 
             let page = 1;
 
+            //getGistComments: DONE
             while (true) {
-
-                const params = new URLSearchParams({
-                    per_page: perPage.toString(),
-                    page: page.toString()
-                });
-                //getGistComments
-                const res = await fetch(`https://api.github.com/gists/${chat.id}/comments?${params.toString()}`, {
-                    cache: 'no-store',
-                    headers : { Authorization: `token ${token}` },
-                });
-
-                const data = await res.json();
+                const data = await getGistComments(token, chat.id, perPage, page);
 
                 if (!data.length) return;
 
@@ -85,17 +70,8 @@ const Chat = ({ user, token, username } : ChatProps) => {
 
     const fetchNewMessages = async () => {
         try {
-            const params = new URLSearchParams({
-                per_page: perPage.toString(),
-                page: lastPage.toString()
-            });
-            //getGistComments
-            const res = await fetch(`https://api.github.com/gists/${chat.id}/comments?${params.toString()}`, {
-                cache: 'no-store',
-                headers : { Authorization: `token ${token}` }
-            });
-
-            const data = await res.json();
+            //getGistComments: Done
+            const data = await getGistComments(token, chat.id, perPage, lastPage);
 
             setMessages(prev => {
                 if (data.length === 0) return prev;
@@ -126,22 +102,14 @@ const Chat = ({ user, token, username } : ChatProps) => {
         if (textValue.trim() === '') return;
         
         try {
-            //addGistComment
-            const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
-                method: 'POST',
-                headers : {
-                    'Content-Type': 'application/json',
-                    Authorization: `token ${token}`
-                },
-                body: JSON.stringify({ body: textValue })
-            })
+            //addGistComment: Done
+            const data = await addGistComment(token, chat.id, textValue);
             setTextValue('');
-            const data = await res.json();
             setMessages(prev => [...prev, data]);
         } catch(error) {
             console.error("Error sending message:", error);
         }
-    }
+    };
     
 
     //TODO: make sure this works
@@ -154,17 +122,14 @@ const Chat = ({ user, token, username } : ChatProps) => {
     }, [messages]);
 
     const leaveChat = async() =>  {
-        //deleteGistComment
-        const res = await fetch(`https://api.github.com/gists/${gistId}/comments/${chat.commentId}`, {
-            method: 'DELETE',
-            headers : {
-                Authorization: `token ${token}`
-            },
-        });
-        if (res.ok) {
+        //deleteGistComment: Done
+        try {
+            await deleteGistComment(token, gistId, chat.commentId);
             navigate('/chatlist');
+        } catch(error) {
+            console.error("Failed to leave chat:", error);
         }
-    }
+    };
 
     return (
         <>
@@ -210,6 +175,6 @@ const Chat = ({ user, token, username } : ChatProps) => {
             </div>
         </>
     )
-}
+};
 
 export default Chat;
