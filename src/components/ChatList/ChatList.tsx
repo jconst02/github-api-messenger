@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { type User } from 'firebase/auth';
 import { Navigate, useNavigate } from 'react-router-dom';
 import styles from './ChatList.module.css';
@@ -39,7 +39,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
         });
     };
 
-    //TODO: error handle
+    //checkGistExists. delete. dont need
     const gistExists = async (gist_id: string) => {
         const res = await fetch(`https://api.github.com/gists/${gist_id}`, {
             headers : { Authorization: `token ${token}` }
@@ -63,6 +63,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
         try {
             setIsLoading(true);
 
+            //checkGistExists
             const { exists, name } = await gistExists(gist_id);
 
             if (!exists) {
@@ -75,6 +76,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
                 return;
             }
 
+            //addGistComment
             const res = await fetch(`https://api.github.com/gists/${gistId}/comments`, {
                 method: 'POST',
                 headers: {
@@ -110,6 +112,7 @@ const ChatList = ({ user, token } : ChatListProps) => {
         try {
             setIsLoading(true);
 
+            //createGist
             const createRes = await fetch('https://api.github.com/gists', {
                 method: 'POST',
                 headers : { Authorization: `token ${token}` },

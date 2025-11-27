@@ -25,7 +25,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
     const [textValue, setTextValue] = useState('');
     const messagesRef = useRef<HTMLDivElement | null>(null);
 
-
+    //getGistName
     useEffect(() => {
         const fetchChatName = async () => {
             try {
@@ -59,7 +59,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                     per_page: perPage.toString(),
                     page: page.toString()
                 });
-
+                //getGistComments
                 const res = await fetch(`https://api.github.com/gists/${chat.id}/comments?${params.toString()}`, {
                     cache: 'no-store',
                     headers : { Authorization: `token ${token}` },
@@ -89,7 +89,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
                 per_page: perPage.toString(),
                 page: lastPage.toString()
             });
-
+            //getGistComments
             const res = await fetch(`https://api.github.com/gists/${chat.id}/comments?${params.toString()}`, {
                 cache: 'no-store',
                 headers : { Authorization: `token ${token}` }
@@ -126,6 +126,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
         if (textValue.trim() === '') return;
         
         try {
+            //addGistComment
             const res = await fetch(`https://api.github.com/gists/${chat.id}/comments`, {
                 method: 'POST',
                 headers : {
@@ -153,6 +154,7 @@ const Chat = ({ user, token, username } : ChatProps) => {
     }, [messages]);
 
     const leaveChat = async() =>  {
+        //deleteGistComment
         const res = await fetch(`https://api.github.com/gists/${gistId}/comments/${chat.commentId}`, {
             method: 'DELETE',
             headers : {

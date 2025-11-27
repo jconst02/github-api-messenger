@@ -14,6 +14,8 @@ export default function useChatLists(gistId: string | undefined, token: string |
 
         const fetchChats = async() => {
             try {
+                
+                //getGistComments
                 const res = await fetch(`https://api.github.com/gists/${gistId}/comments`, {
                     cache: 'no-store',
                     headers : { Authorization: `token ${token}` }

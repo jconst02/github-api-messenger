@@ -12,6 +12,7 @@ export default function useGistId(token: string | undefined): [
 
         const fetchOrCreateGist = async () => {
             try {
+                //getGistByDescription
                 const per_page = 100;
                 let page = 1;
 
@@ -45,6 +46,7 @@ export default function useGistId(token: string | undefined): [
                     setGistId(gist.id);
                 }
                 else {
+                    //createGist
                     const createRes = await fetch('https://api.github.com/gists', {
                         method: 'POST',
                         headers : { Authorization: `token ${token}` },
