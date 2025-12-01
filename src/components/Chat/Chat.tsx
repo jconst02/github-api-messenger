@@ -22,23 +22,8 @@ const Chat = ({ user, token, username } : ChatProps) => {
     const {chat, gistId } = location.state;
 
     const [messages, setMessages] = useState<any[]>([]);
-    const [chatName, setChatName] = useState<string | null>(null);
     const [textValue, setTextValue] = useState('');
     const messagesRef = useRef<HTMLDivElement | null>(null);
-
-    //getGistName: Done
-    useEffect(() => {
-        const fetchChatName = async () => {
-            try {
-                const chatName = await getGistName(token, chat.id);
-                setChatName(chatName);
-            } catch (error) {
-                console.error("Error getting chat name:", error);
-            }
-        };
-        
-        fetchChatName();
-    }, [chat.id, token])
 
     const perPage = 100;
     let lastPage = 1;
@@ -89,7 +74,6 @@ const Chat = ({ user, token, username } : ChatProps) => {
     }
 
     useEffect(() => {
-
         fetchAllMessages();
         let intervalId = setInterval(fetchNewMessages, 5000);
         return () => clearInterval(intervalId);
@@ -135,10 +119,10 @@ const Chat = ({ user, token, username } : ChatProps) => {
         <>
             <div className={styles.chat}>
                 <div className={styles.bar}>
-                    <button className={styles.backbutton}>
+                    <button className={styles.backbutton} onClick={() => navigate('/chatlist')}>
                         <img src={menu} alt='' />
                     </button>
-                    <div>{chatName}</div>
+                    <div>{chat.name}</div>
                     <div className={styles.chatId}>Chat ID: {chat.id}</div>
                     <button className={styles.leavebutton} onClick={leaveChat}>
                         Leave chat
