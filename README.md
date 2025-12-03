@@ -1,69 +1,148 @@
-# React + TypeScript + Vite
+# GitHub API Messenger
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A basic real-time messaging app built entirely with GitHub Gists. No backend required.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- GitHub OAuth authentication
+- Real-time messaging using GitHub Gists
+- Create and message on multiple chat rooms
+- Share chat rooms via Gist ID
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React + TypeScript
+- Firebase Authentication (GitHub OAuth)
+- GitHub Gists API
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## How It Works
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+This app uses GitHub Gists as a database, treating gists and comments as data storage:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Architecture
+
+1. **Master Gist**: A special Gist that stores your list of chats as comments
+2. **Chats**: Each chat is a seperate GitHub Gist
+3. **Messages**: Each message is stored as a comment on a chat's Gist.
+
+### Data Flow
+```
+Login with GitHub → Get auth token → Find/Create Master Gist
+                                          ↓
+                        Fetch Chat list (comments on master gist)
+                          ↓                                 ↓
+                       Open Chat                     Create/Add Chat
+                 (fetch gist comments)              (post comment to master gist)
+                  ↓               ↓
+            Send Message        Leave Chat
+  (post comment to chat gist)  (delete comment from master)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Real-time updates
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Messages auto-update using polling
+- Everything 5 seconds, the app fetches new comments from the current chat's Gist
+- New messages appear automatically without refreshing the page
+- Delay of 5 seconds when a user sends a message until others see it
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Rate Limits
+
+- Rate limit for authenticated GitHub users is 5,000 request per hour
+- Logging in is 2 requests
+- Opening a chat is 1 + number of comments / 100 rounded up to next whole integer
+- Sending a message is 1 request
+- Polling is 1 request per 5 seconds so 720 per hour
+- API usage should be reasonable and not hit that rate limit often
+
+## Prerequisites
+
+- Node.js (v18+)
+- GitHub account
+- Firebase project with GitHub OAuth enabled
+
+## Setup
+
+### 1. Clone the repository
 ```
+git clone https://github.com/johnconstantinides/github-api-messenger.git
+cd project
+```
+
+### 2. Install dependencies
+```
+npm install
+```
+
+### 3. Set up Firebase
+
+**Create Firebase Project:**
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project
+2. Once created, click "Build" in the left sidebar, then "Authentication"
+3. Enable "GitHub" as a sign-in provider
+4. Copy the callback URL
+
+**Create GitHub OAuth App:**
+5. Go to [GitHub Developer Settings](https://github.com/settings/developers) and Register a new OAuth app 
+6. Set Homepage URL to `http://localhost:5173` and Authorization callback URL to the callback URL from step 4, then regiser the application
+7.  Copy the Client ID and generate a Client Secret
+
+**Configure Firebase:**
+8.  Go back to Firebase authentication from step 3
+9.  Paste the Client ID and Client Secret
+
+**Get Firebase Config:**
+10.  Go to project settings
+11.  Scroll down and click the web icon and regiser the app
+12.  Copy the `firebaseConfig` values
+
+13.  Create a `.env` file in the root directory and use the `firebaseConfig` values here:
+```env
+VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+```
+
+### 4. Run the development server
+```
+npm run dev
+```
+
+## Usage
+
+1. **Login**
+  - Click "Login with GitHub" on the home page
+  - Authorize the app to access your GitHub Account
+
+2. **Create Chat**
+  - Click the "Create Chat" button
+  - Enter a name for the chat room and click "Create Chat"
+  - A new private GitHub Gist will be created automatically
+
+3. **Add an Existing Chat**
+  - Click the "Add Chat" button
+  - Enter the Gist ID for a current existing chat room
+  - The chat will be added to your list
+
+4. **Send Messages**
+  - Click on a chat to open it
+  - Type message then hit enter or click "Send"
+
+5. **Share a Chat**
+  - Click on that chat to open it
+  - Gist ID is shown in the top right
+  - Share that ID with others so they can join
+
+### Notes
+
+- Each chat is a secret Gist - anyone with the Gist ID can view and join it
+- Messages appear as comments on the gist
+- You can view/edit chats directly on GitHub Gists
+
+## Future Improvements
+
+- [ ] Implement message pagination, load only most recent messages when opening a chat, with the option to fetch older ones on scroll.
+

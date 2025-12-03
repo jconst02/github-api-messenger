@@ -47,7 +47,7 @@ const Login = ({ user, setUser, setToken, username, setUsername } : LoginProps) 
                 <button 
                     className='btn'
                     onClick={gitHubLogin}
-                >Login with Github</button>
+                >Login with GitHub</button>
                 }
             </div>
         </>
