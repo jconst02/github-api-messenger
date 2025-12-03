@@ -25,7 +25,7 @@ This app uses GitHub Gists as a database, treating gists and comments as data st
 2. **Chats**: Each chat is a seperate GitHub Gist
 3. **Messages**: Each message is stored as a comment on a chat's Gist.
 
-### Data Flow
+### Application Flow
 ```
 Login with GitHub → Get auth token → Find/Create Master Gist
                                           ↓
@@ -76,23 +76,27 @@ npm install
 ### 3. Set up Firebase
 
 **Create Firebase Project:**
+
 1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project
 2. Once created, click "Build" in the left sidebar, then "Authentication"
 3. Enable "GitHub" as a sign-in provider
 4. Copy the callback URL
 
 **Create GitHub OAuth App:**
+
 5. Go to [GitHub Developer Settings](https://github.com/settings/developers) and Register a new OAuth app 
 6. Set Homepage URL to `http://localhost:5173` and Authorization callback URL to the callback URL from step 4, then regiser the application
 7.  Copy the Client ID and generate a Client Secret
 
 **Configure Firebase:**
+
 8.  Go back to Firebase authentication from step 3
 9.  Paste the Client ID and Client Secret
 
 **Get Firebase Config:**
+
 10.  Go to project settings
-11.  Scroll down and click the web icon and regiser the app
+11.  Scroll down and click the web icon and register the app
 12.  Copy the `firebaseConfig` values
 
 13.  Create a `.env` file in the root directory and use the `firebaseConfig` values here:
